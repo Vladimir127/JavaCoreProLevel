@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -15,9 +16,9 @@ public class ClientGUI extends JFrame {
     private final JTextArea clientsInformation = new JTextArea();
     private final JLabel textInputLabel = new JLabel("Сообщение: ");
     private final JTextField textInput = new JTextField();
-    private final JScrollPane js = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+    private final JScrollPane scrollPaneChat = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    private final JScrollPane jsClients = new JScrollPane(clientsInformation, JScrollPane.VERTICAL_SCROLLBAR_NEVER,
+    private final JScrollPane scrollPaneClients = new JScrollPane(clientsInformation, JScrollPane.VERTICAL_SCROLLBAR_NEVER,
             JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     private final JButton sendButton = new JButton("Отправить");
 
@@ -77,7 +78,7 @@ public class ClientGUI extends JFrame {
         setMainFrame();
 
         // инициализируем панель для чата
-        initilizeChatPanel();
+        initializeChatPanel();
 
         // инициализируем панель для авторизации
         initializeLoginJPanel();
@@ -110,15 +111,33 @@ public class ClientGUI extends JFrame {
     /**
      * Инициализирует панель для чата
      */
-    private void initilizeChatPanel() {
+    private void initializeChatPanel() {
         textArea.setEditable(false);
         clientsInformation.setEditable(false);
         chatPanel.setBackground(Color.white);
         chatPanel.setPreferredSize(new Dimension(490, 490));
-        js.setPreferredSize(new Dimension(450, 350));
-        jsClients.setPreferredSize(new Dimension(450, 35));
-        chatPanel.add(jsClients);
-        chatPanel.add(js);
+        scrollPaneChat.setPreferredSize(new Dimension(450, 350));
+
+        JPanel upperPanel = new JPanel();
+        upperPanel.setLayout(new BorderLayout());
+        scrollPaneClients.setPreferredSize(new Dimension(345, 35));
+        JButton changeNickNameButton = new JButton("Сменить ник");
+        changeNickNameButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String result = JOptionPane.showInputDialog("Введите новый ник");
+
+                if (!result.equals("")){
+                    clientNetwork.sendMessage("/changenick " + result);
+                }
+            }
+        });
+
+        upperPanel.add(scrollPaneClients);
+        upperPanel.add(changeNickNameButton, BorderLayout.EAST);
+
+        chatPanel.add(upperPanel);
+        chatPanel.add(scrollPaneChat);
         textInput.setPreferredSize(new Dimension(150, 25));
         chatPanel.add(textInputLabel);
         chatPanel.add(textInput);

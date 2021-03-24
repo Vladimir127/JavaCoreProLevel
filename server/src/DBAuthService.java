@@ -5,13 +5,36 @@ import java.sql.*;
  */
 public class DBAuthService implements AuthService {
     private static final String DB_CONNECTION = "jdbc:postgresql://localhost:5432/dbtest";
-    private static final String DB_USER = "postgres";
-    private static final String DB_PASSWORD = "postgres";
+    private static final String DB_USER="postgres";
+    private static final String DB_PASSWORD="postgres";
 
     private static Connection connection;
 
-    // Получаем соединение в статическом блоке, поскольку само это поле также является статическим
-    static {
+    private static PreparedStatement findByLoginAndPassword;
+    private static PreparedStatement changeNickname;
+
+    /** Ссылка на объект для паттерна Singleton */
+    private static DBAuthService instance;
+
+    /** Приватный конструктор */
+    private DBAuthService() { }
+
+    /**
+     * Метод, возвращающий единственный объект данного класса согласно паттерну Singleton
+     * @return Объект класса DBAuthService
+     */
+    public static DBAuthService getInstance(){
+        if (instance == null){
+            openConnection();
+            createPreparedStatements();
+
+            instance = new DBAuthService();
+        }
+
+        return instance;
+    }
+
+    private static void openConnection() {
         try {
             connection = DriverManager.getConnection(DB_CONNECTION, DB_USER, DB_PASSWORD);
         } catch (SQLException throwables) {
@@ -19,21 +42,68 @@ public class DBAuthService implements AuthService {
         }
     }
 
+    public static void createPreparedStatements(){
+        try {
+            findByLoginAndPassword = connection.prepareStatement("SELECT * FROM chat_users WHERE lower(login) = LOWER(?) AND pass = ?");
+            changeNickname = connection.prepareStatement("UPDATE chat_users SET nickname = ? WHERE nickname = ?");
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+    }
+
     @Override
     public String getNicknameByLoginAndPassword(String login, String password) {
-        try (
-                PreparedStatement stm = connection
-                        .prepareStatement("SELECT * FROM chat_users WHERE login='" + login + "' AND pass='" + password + "'");
+        ResultSet resultSet = null;
 
-                ResultSet resultSet = stm.executeQuery()) {
+        try {
+            findByLoginAndPassword.setString(1, login);
+            findByLoginAndPassword.setString(2, password);
 
-            if (resultSet.next()) {
-                return login;
+            resultSet = findByLoginAndPassword.executeQuery();
+
+            if (resultSet.next()){
+                return resultSet.getString("nickname");
             }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        } finally {
+            closeResultSet(resultSet);
+        }
+
+        return null;
+    }
+
+    private void closeResultSet(ResultSet resultSet) {
+        if (resultSet == null){
+            try {
+                resultSet.close();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public int changeNickname(String oldNickname, String newNickname) {
+        try {
+            changeNickname.setString(1, newNickname);
+            changeNickname.setString(2, oldNickname);
+            return changeNickname.executeUpdate();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
 
-        return null;
+        return 0;
+    }
+
+    @Override
+    public void close(){
+        try {
+            connection.close();
+            findByLoginAndPassword.close();
+            changeNickname.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 }

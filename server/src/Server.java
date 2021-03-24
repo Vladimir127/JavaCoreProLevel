@@ -9,7 +9,7 @@ public class Server {
     private List<ClientHandler> clients;
 
     /** Сервис авторизации через базу данных */
-    private AuthService authService = new DBAuthService();
+    private AuthService authService = DBAuthService.getInstance();
 
     /**
      * Возвращает сервис авторизации
@@ -37,6 +37,8 @@ public class Server {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            authService.close();
         }
     }
 
