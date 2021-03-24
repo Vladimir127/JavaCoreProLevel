@@ -99,6 +99,13 @@ public class ClientHandler {
                         // Если сообщение начинается со слеша, то это команда. В этом блоке будет обработка команд
                         if (msg.startsWith("/")) {
 
+                            if (msg.startsWith("/changenick")){
+                                String[] tokens = msg.split("\\s", 2);
+                                server.getAuthService().changeNickname(nickname, tokens[1]);
+                                nickname = tokens[1];
+                                server.broadcastClientsList();
+                            }
+
                             // клиент вышел
                             if (msg.equalsIgnoreCase("/end")) {
                                 continueChat = false;
