@@ -5,17 +5,13 @@ import java.net.Socket;
 
 /** Обработчик клиентов - класс, который содержит информацию о клиенте, необходимую серверу для работы с этим клиентом */
 public class ClientHandler {
-    /** Логин (ник) пользователя */
     private String nickname;
 
-    /** Сокет для взаимодействия клиента с сервером */
     private Socket socket;
 
-    /** Потоки ввода и вывода для взаимодействия клиента с сервером */
     private DataInputStream in;
     private DataOutputStream out;
 
-    /** Сервер, с которым взаимодействует данный обработчик клиента */
     private Server server;
 
     /**

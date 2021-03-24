@@ -5,7 +5,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 /**
- * Класс, отвечающий за пользовательский интерфейс клиента TODO: Переделать на мой собственный интерфейс    // TODO: Изменить язык интерфейса на руввкий
+ * Класс, отвечающий за пользовательский интерфейс клиента TODO: Переделать на мой собственный интерфейс
  */
 public class ClientGUI extends JFrame {
     /** Основные элементы пользовательского интерфейса */
@@ -65,7 +65,6 @@ public class ClientGUI extends JFrame {
      * с которым будет взаимодействовать пользовательский интерфейс,
      * предназначенный для взаимодействия с сервером */
     private final ClientNetwork clientNetwork = new ClientNetwork();
-
 
     /**
      * Конструктор

@@ -23,7 +23,6 @@ public class Server {
      * Конструктор
      */
     public Server() {
-        // Инициализируем список клиентов
         this.clients = new ArrayList<>();
 
         // Создаём серверный сокет и ждём подключения клиентов
@@ -32,10 +31,8 @@ public class Server {
 
             // Поскольку количество клиентов не ограничено, цикл бесконечный
             while (true) {
-                // Получили сокет, приняв клиента
+                // Получили сокет, приняв клиента. На основе этого сокета создаём для клиента объект ClientHandler
                 Socket socket = serverSocket.accept();
-
-                // На основе этого сокета создаём для клиента объект ClientHandler
                 new ClientHandler(this, socket);
             }
         } catch (IOException e) {
@@ -57,19 +54,14 @@ public class Server {
      * Рассылает список имен всех клиентам
      */
     public void broadcastClientsList() {
-        // Создаём StringBuilder, указывая размер строки - длину имени (15) умножаем на количество клиентов.
         StringBuilder sb = new StringBuilder(15 * clients.size());
-
-        // Добавляем в начало строки служебное слово
         sb.append("/clients ");
 
-        // После этого добавляем через пробел ник каждого клиента и формируем строку
         for (ClientHandler o : clients) {
             sb.append(o.getNickname()).append(" ");
         }
-        String out = sb.toString();
 
-        // Рассылаем сообщение с помощью обычного метода broadcastMessage()
+        String out = sb.toString();
         broadcastMessage(out);
     }
 
@@ -99,26 +91,20 @@ public class Server {
      */
     public void privateMsg(ClientHandler sender, String receiverNick, String msg) {
 
-        // Если получатель равен отправителю, в начало сообщения ставим
-        // не ник отправителя, а словосочетание "Пометка для себя"
         if (sender.getNickname().equals(receiverNick)) {
             sender.sendMessage("Заметка для меня: " + msg);
             return;
         }
 
-        // Выполняем поиск клиента с нужным ником в коллекции клиентов
         for (ClientHandler receiver : clients) {
             if (receiver.getNickname().equals(receiverNick)) {
-                // Если клиент с нужным именем нашёлся, отправляем ему сообщение, в котором указываем, от кого оно,
-                receiver.sendMessage("from " + sender.getNickname() + ": " + msg);
+                receiver.sendMessage("От пользователя " + sender.getNickname() + ": " + msg);
 
-                // А отправителю отправляем то же сообщение, в котором указано, для кого оно (чтобы оно сохранилось в истории)
-                sender.sendMessage("for " + receiverNick + ": " + msg);
+                sender.sendMessage("Для пользователя " + receiverNick + ": " + msg);
                 return;
             }
         }
 
-        // Если клиент с нужным именем не нашёлся, отправителю отправляется соответствующее сообщение
-        sender.sendMessage("Client " + receiverNick + " is not found");
+        sender.sendMessage("Пользователь " + receiverNick + " не найден");
     }
 }

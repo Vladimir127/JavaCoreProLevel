@@ -8,10 +8,8 @@ import java.net.UnknownHostException;
  * Класс, отвечающий за взаимодействие клиента и сервера, симметричный классу ClientHandler на стороне сервера
  */
 public class ClientNetwork {
-    /** Сокет для взаимодействия клиента с сервером */
     private Socket socket;
 
-    /** Потоки ввода и вывода для взаимодействия клиента с сервером */
     private DataInputStream in;
     private DataOutputStream out;
 
@@ -26,7 +24,6 @@ public class ClientNetwork {
      */
     public void connect() {
         try {
-            // Инициализируем сокет и потоки
             socket = new Socket("localhost", 8189);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
@@ -47,14 +44,11 @@ public class ClientNetwork {
                         if (message.startsWith("/authok")) {
 
                             // вызываем метод Callback-a авторизации, который имплиментирован ClientGUI, чтобы закрыть
-                            // окно авторизации и открыть окно чата
+                            // окно авторизации и открыть окно чата. После этого можно выйти из цикла
                             callOnAuth.callback("/authok");
 
-                            // после этого можно выйти из цикла
                             isAuthorized = true;
                         } else if (message.equalsIgnoreCase("/end")) {
-
-                            //если сервер написал end, выходим из обоих циклов и отключаемся
                             goOn = false;
                         } else if (message.startsWith("/error")){
 
@@ -80,10 +74,8 @@ public class ClientNetwork {
                     // Цикл для отправки сообщений
                     while (goOn) {
 
-                        // читаем сообщение сервера
                         String msg = in.readUTF();
 
-                        // Если сообщение начинается со служебного слова /end, выходим из цикла
                         if (msg.equalsIgnoreCase("/end")) {
                             goOn = false;
                         }
@@ -121,7 +113,6 @@ public class ClientNetwork {
      */
     public boolean sendMessage(String msg) {
         try {
-            // Записываем сообщение в выходной поток
             out.writeUTF(msg);
             return true;
         } catch (IOException e) {
@@ -134,7 +125,6 @@ public class ClientNetwork {
      * Закрывает соединение с сервером
      */
     public void closeConnection() {
-        // закончили работать, все выключаем и сокеты и потоки ввода-вывода
         try {
             in.close();
 

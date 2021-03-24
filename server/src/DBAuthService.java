@@ -3,13 +3,11 @@ import java.sql.*;
 /**
  * Сервис для авторизации с помощью базы данных
  */
-public class DBAuthService implements AuthService{
-    /** Строка подключения, имя пользователя и пароль */
+public class DBAuthService implements AuthService {
     private static final String DB_CONNECTION = "jdbc:postgresql://localhost:5432/dbtest";
-    private static final String DB_USER="postgres";
-    private static final String DB_PASSWORD="postgres";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASSWORD = "postgres";
 
-    /** Объект подключения для связи с базой данных */
     private static Connection connection;
 
     // Получаем соединение в статическом блоке, поскольку само это поле также является статическим
@@ -23,23 +21,19 @@ public class DBAuthService implements AuthService{
 
     @Override
     public String getNicknameByLoginAndPassword(String login, String password) {
-        try(
-                // Создаём подготовленное выражение, хранящее запрос с параметрами на выборку пользователей
+        try (
                 PreparedStatement stm = connection
-                        .prepareStatement("SELECT * FROM chat_users WHERE login='"+login+"' AND pass='"+password+"'");
+                        .prepareStatement("SELECT * FROM chat_users WHERE login='" + login + "' AND pass='" + password + "'");
 
-                // Выполняем запрос и записываем результат в объект ResultSet
-                ResultSet resultSet = stm.executeQuery()){
+                ResultSet resultSet = stm.executeQuery()) {
 
-            // Если результирующая выборка имеет запись, возвращаем логин
-            if (resultSet.next()){
+            if (resultSet.next()) {
                 return login;
             }
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
 
-        // Если такую запись найти не удалось, возвращаем null
         return null;
     }
 }
