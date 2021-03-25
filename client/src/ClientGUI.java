@@ -4,6 +4,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 /**
  * Класс, отвечающий за пользовательский интерфейс клиента TODO: Переделать на мой собственный интерфейс
@@ -66,6 +71,12 @@ public class ClientGUI extends JFrame {
      * с которым будет взаимодействовать пользовательский интерфейс,
      * предназначенный для взаимодействия с сервером */
     private final ClientNetwork clientNetwork = new ClientNetwork();
+
+    /** Логин текущего пользователя для формирования имени файла с историей */
+    private String login;
+
+    /** Путь к файлу с историей */
+    private Path historyPath;
 
     /**
      * Конструктор
@@ -165,16 +176,16 @@ public class ClientGUI extends JFrame {
         loginPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         loginPanel.setPreferredSize(new Dimension(300, 150));
         loginPanel.setBorder(BorderFactory.createTitledBorder("Авторизация"));
-        JTextField login = new JTextField();
+        JTextField loginTextField = new JTextField();
         JLabel loginLabel = new JLabel("Ваше имя пользователя: ");    // TODO: Переделать интерфейс
         JLabel passwordLabel = new JLabel("Ваш пароль: ");
-        JPasswordField password = new JPasswordField();
-        login.setPreferredSize(new Dimension(100, 25));
-        password.setPreferredSize(new Dimension(100, 25));
+        JPasswordField passwordTextField = new JPasswordField();
+        loginTextField.setPreferredSize(new Dimension(100, 25));
+        passwordTextField.setPreferredSize(new Dimension(100, 25));
         loginPanel.add(loginLabel);
-        loginPanel.add(login);
+        loginPanel.add(loginTextField);
         loginPanel.add(passwordLabel);
-        loginPanel.add(password);
+        loginPanel.add(passwordTextField);
         JPanel buttonPanel = new JPanel();
         buttonPanel.setPreferredSize(new Dimension(280, 35));
         buttonPanel.setBackground(Color.WHITE);
@@ -182,11 +193,12 @@ public class ClientGUI extends JFrame {
         buttonPanel.add(button);
         button.addActionListener(e -> {
             // При нажатии кнопки "Submit" программа отправляет на сервер сообщение формата /auth login password
-            clientNetwork.sendMessage("/auth " + login.getText() + " " + String.valueOf(password.getPassword()));
+            login = loginTextField.getText();
+            clientNetwork.sendMessage("/auth " + login + " " + String.valueOf(passwordTextField.getPassword()));
 
             // Сбрасываем данные логина и пароля
-            login.setText("");
-            password.setText("");
+            loginTextField.setText("");
+            passwordTextField.setText("");
         });
         loginPanel.add(buttonPanel);
         loginPanel.setVisible(true);
@@ -198,7 +210,11 @@ public class ClientGUI extends JFrame {
      */
     private void setCallBacks() {
         // при получении сообщения от сервера добавляем его в textArea
-        this.clientNetwork.setCallOnMsgRecieved(message -> textArea.append(message + "\n"));
+        // и записываем в файл
+        this.clientNetwork.setCallOnMsgRecieved(message -> {
+            textArea.append(message + "\n");
+            writeToFile(message + "\n");
+        });
 
         // при получении нового списка клиентов
         this.clientNetwork.setCallOnChangeClientList(clientsList -> {
@@ -213,14 +229,63 @@ public class ClientGUI extends JFrame {
             selectClient.setModel(new DefaultComboBoxModel(clients));// передаем данные combobox
         });
 
-        // при успешной авторизации мы прячем loginPanel и делаем видимой chatPanel
+        // при успешной авторизации мы прячем loginPanel и делаем видимой chatPanel,
+        // а также загружаем историю сообщений
         this.clientNetwork.setCallOnAuth(s -> {
             loginPanel.setVisible(false);
             chatPanel.setVisible(true);
+
+            initializeHistory();
         });
 
         // при сообщении об ошибке показываем pop-up
         this.clientNetwork.setCallOnError(message -> JOptionPane.showMessageDialog(null, message, "Ошибка",
                 JOptionPane.ERROR_MESSAGE));
+    }
+
+    private void initializeHistory(){
+        File directory = new File("history");
+        if (!directory.exists()){
+            directory.mkdirs();
+        }
+
+        String path = "history" + File.separator + login.toLowerCase() + "2021.txt";
+        File file = new File(path);
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        historyPath = Paths.get(path);
+
+        readHistoryFromFile();
+    }
+
+    private void writeToFile(String text){
+        try {
+            Files.write(historyPath, text.getBytes(), StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void readHistoryFromFile(){
+        try {
+            java.util.List<String> lines = Files.readAllLines(historyPath);
+
+            int startIndex = 0;
+            int countLines = 100;
+
+            if (lines.size() > countLines){
+                startIndex = lines.size() - countLines;
+            }
+
+            for (int i = startIndex; i < lines.size(); i++) {
+                textArea.append(lines.get(i) + System.lineSeparator());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
