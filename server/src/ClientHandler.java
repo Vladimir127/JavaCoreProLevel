@@ -32,7 +32,7 @@ public class ClientHandler {
             this.out = new DataOutputStream(socket.getOutputStream());
 
             // поток для клиента
-            new Thread(() -> {
+            server.getClientsExecutorService().submit(() -> {
 
                 boolean continueChat = true;
                 String msg = "";
@@ -139,7 +139,7 @@ public class ClientHandler {
                     disconnect();
                 }
 
-            }).start();
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
