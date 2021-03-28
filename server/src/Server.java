@@ -3,6 +3,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     /** Список клиентов, подключённых к серверу */
@@ -11,12 +13,23 @@ public class Server {
     /** Сервис авторизации через базу данных */
     private AuthService authService = DBAuthService.getInstance();
 
+    /** Объект ExecutorService для управления потоками клиентов */
+    private ExecutorService clientsExecutorService;
+
     /**
      * Возвращает сервис авторизации
      * @return Сервис авторизации
      */
     public AuthService getAuthService() {
         return authService;
+    }
+
+    /**
+     * Возвращает объект ExecutorService для управления потоками клиентов
+     * @return Объект ExecutorService для управления потоками клиентов
+     */
+    public ExecutorService getClientsExecutorService() {
+        return clientsExecutorService;
     }
 
     /**
@@ -29,6 +42,8 @@ public class Server {
         try (ServerSocket serverSocket = new ServerSocket(8189)) {
             System.out.println("Server is listening on 8189");
 
+            clientsExecutorService = Executors.newCachedThreadPool();
+
             // Поскольку количество клиентов не ограничено, цикл бесконечный
             while (true) {
                 // Получили сокет, приняв клиента. На основе этого сокета создаём для клиента объект ClientHandler
@@ -39,6 +54,7 @@ public class Server {
             e.printStackTrace();
         } finally {
             authService.close();
+            clientsExecutorService.shutdown();
         }
     }
 
