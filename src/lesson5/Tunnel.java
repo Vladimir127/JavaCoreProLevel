@@ -1,5 +1,6 @@
 package lesson5;
 
+/** Тоннель */
 public class Tunnel extends Stage {
     public Tunnel() {
         this.length = 80;
