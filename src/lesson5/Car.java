@@ -1,9 +1,11 @@
 package lesson5;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Машина */
 public class Car implements Runnable {
+    private static final AtomicInteger racePosition = new AtomicInteger();
     private static int CARS_COUNT;
     static {
         CARS_COUNT = 0;
@@ -49,6 +51,8 @@ public class Car implements Runnable {
         for (int i = 0; i < race.getStages().size(); i++) {
             race.getStages().get(i).go(this);
         }
+
+        System.out.println(this.name + " занял " + racePosition.incrementAndGet() + " место");
 
         cdlFinish.countDown();
     }
