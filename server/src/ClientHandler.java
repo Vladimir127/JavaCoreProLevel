@@ -2,6 +2,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Обработчик клиентов - класс, который содержит информацию о клиенте, необходимую серверу для работы с этим клиентом */
 public class ClientHandler {
@@ -13,6 +15,8 @@ public class ClientHandler {
     private DataOutputStream out;
 
     private Server server;
+
+    private static final Logger logger = Logger.getLogger(Server.class.getName());
 
     /**
      * Конструктор класса
@@ -30,6 +34,8 @@ public class ClientHandler {
             this.socket = socket;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
+
+            logger.log(Level.INFO, "Создали ClientHandler");
 
             // поток для клиента
             server.getClientsExecutorService().submit(() -> {
@@ -53,6 +59,8 @@ public class ClientHandler {
 
                             // Отправляем сообщение об ошибке sendMessage("/error timeout")
                             sendMessage("/error timeout");
+
+                            logger.log(Level.WARNING, "Время ожидания авторизации истекло");
                         }
 
                         else if (in.available() > 0) {
@@ -75,17 +83,23 @@ public class ClientHandler {
                                     isAuthorized = true;
                                     sendMessage("/authok");
                                     server.subscribe(this);
+
+                                    logger.log(Level.INFO, "Клиент " + nickname + " успешно авторизовался");
                                 }
 
                                 // иначе пишем клиенту об ошибке, добавляя "код" ошибки
                                 else {
                                     sendMessage("/error authorization");
+
+                                    logger.log(Level.WARNING, "Не удалось авторизовать клиента " + tokens[1]);
                                 }
                             }
 
                             // Если клиент решил выйти без авторизации
                             if (msg.equalsIgnoreCase("/end")) {
                                 continueChat = false;
+
+                                logger.log(Level.INFO, "Клиент вышел из чата");
                             }
                         } // это скобка от ДЗ 8
                     }
@@ -101,14 +115,19 @@ public class ClientHandler {
 
                             if (msg.startsWith("/changenick")){
                                 String[] tokens = msg.split("\\s", 2);
+                                String oldNickname = nickname;
                                 server.getAuthService().changeNickname(nickname, tokens[1]);
                                 nickname = tokens[1];
                                 server.broadcastClientsList();
+
+                                logger.log(Level.INFO, "Клиент " + oldNickname + " сменил ник на " + tokens[1]);
                             }
 
                             // клиент вышел
                             if (msg.equalsIgnoreCase("/end")) {
                                 continueChat = false;
+
+                                logger.log(Level.INFO, "Клиент " + nickname + " вышел из чата");
                             }
 
                             // приватное сообщение ДЗ7
@@ -123,6 +142,8 @@ public class ClientHandler {
                                     // при этом в качестве отправителя передаём данный объект ClientHandler,
                                     // а в качестве получателя и сообщения - элементы массива
                                     server.privateMsg(this, tokens[1], tokens[2]);
+
+                                    logger.log(Level.INFO, "Клиент " + nickname + " отправил приватное сообщение клиенту " + tokens[1]);
                                 }
                             }
                         }
@@ -131,6 +152,8 @@ public class ClientHandler {
                         else {
                             // Рассылаем сообщение всем клиентам, вызывая метод broadcastMessage на сервере
                             server.broadcastMessage(nickname + ": " + msg);
+
+                            logger.log(Level.INFO, "Клиент " + nickname + " отправил сообщение всем пользователям: " + msg);
                         }
                     }
                 } catch (IOException e) {
