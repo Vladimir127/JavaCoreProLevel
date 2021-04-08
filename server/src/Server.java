@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Server {
     /** Список клиентов, подключённых к серверу */
@@ -15,6 +17,8 @@ public class Server {
 
     /** Объект ExecutorService для управления потоками клиентов */
     private ExecutorService clientsExecutorService;
+
+    private static final Logger logger = Logger.getLogger(Server.class.getName());
 
     /**
      * Возвращает сервис авторизации
@@ -40,7 +44,7 @@ public class Server {
 
         // Создаём серверный сокет и ждём подключения клиентов
         try (ServerSocket serverSocket = new ServerSocket(8189)) {
-            System.out.println("Server is listening on 8189");
+            logger.log(Level.INFO, "Сервер запущен. Порт: 8189");
 
             clientsExecutorService = Executors.newCachedThreadPool();
 
