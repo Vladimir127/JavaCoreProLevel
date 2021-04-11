@@ -9,48 +9,31 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Server {
-    /** Список клиентов, подключённых к серверу */
     private List<ClientHandler> clients;
 
-    /** Сервис авторизации через базу данных */
     private AuthService authService = DBAuthService.getInstance();
 
-    /** Объект ExecutorService для управления потоками клиентов */
     private ExecutorService clientsExecutorService;
 
     private static final Logger logger = Logger.getLogger(Server.class.getName());
 
-    /**
-     * Возвращает сервис авторизации
-     * @return Сервис авторизации
-     */
     public AuthService getAuthService() {
         return authService;
     }
 
-    /**
-     * Возвращает объект ExecutorService для управления потоками клиентов
-     * @return Объект ExecutorService для управления потоками клиентов
-     */
     public ExecutorService getClientsExecutorService() {
         return clientsExecutorService;
     }
 
-    /**
-     * Конструктор
-     */
     public Server() {
         this.clients = new ArrayList<>();
 
-        // Создаём серверный сокет и ждём подключения клиентов
         try (ServerSocket serverSocket = new ServerSocket(8189)) {
             logger.log(Level.INFO, "Сервер запущен. Порт: 8189");
 
             clientsExecutorService = Executors.newCachedThreadPool();
 
-            // Поскольку количество клиентов не ограничено, цикл бесконечный
             while (true) {
-                // Получили сокет, приняв клиента. На основе этого сокета создаём для клиента объект ClientHandler
                 Socket socket = serverSocket.accept();
                 new ClientHandler(this, socket);
             }
@@ -62,19 +45,12 @@ public class Server {
         }
     }
 
-    /**
-     * Рассылает сообщение всем клиентам
-     * @param message Сообщение
-     */
     public void broadcastMessage(String message) {
         for (ClientHandler client : clients) {
             client.sendMessage(message);
         }
     }
 
-    /**
-     * Рассылает список имен всех клиентам
-     */
     public void broadcastClientsList() {
         StringBuilder sb = new StringBuilder(15 * clients.size());
         sb.append("/clients ");
@@ -87,30 +63,16 @@ public class Server {
         broadcastMessage(out);
     }
 
-    /**
-     * Добавляет клиента в список
-     * @param client Клиент
-     */
     public void subscribe(ClientHandler client) {
         clients.add(client);
         broadcastClientsList();
     }
 
-    /**
-     * Удаляет клиента из списка
-     * @param client Клиент
-     */
     public void unsubscribe(ClientHandler client) {
         clients.remove(client);
         broadcastClientsList();
     }
 
-    /**
-     * Отправляет личное сообщение конкретному клиенту
-     * @param sender Отправитель
-     * @param receiverNick Логин получателя
-     * @param msg Сообщение
-     */
     public void privateMsg(ClientHandler sender, String receiverNick, String msg) {
 
         if (sender.getNickname().equals(receiverNick)) {

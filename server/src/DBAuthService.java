@@ -1,8 +1,5 @@
 import java.sql.*;
 
-/**
- * Сервис для авторизации с помощью базы данных
- */
 public class DBAuthService implements AuthService {
     private static final String DB_CONNECTION = "jdbc:postgresql://localhost:5432/dbtest";
     private static final String DB_USER="postgres";
@@ -13,16 +10,10 @@ public class DBAuthService implements AuthService {
     private static PreparedStatement findByLoginAndPassword;
     private static PreparedStatement changeNickname;
 
-    /** Ссылка на объект для паттерна Singleton */
     private static DBAuthService instance;
 
-    /** Приватный конструктор */
     private DBAuthService() { }
 
-    /**
-     * Метод, возвращающий единственный объект данного класса согласно паттерну Singleton
-     * @return Объект класса DBAuthService
-     */
     public static DBAuthService getInstance(){
         if (instance == null){
             openConnection();
