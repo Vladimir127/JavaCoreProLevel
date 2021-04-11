@@ -10,11 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-/**
- * Класс, отвечающий за пользовательский интерфейс клиента TODO: Переделать на мой собственный интерфейс
- */
 public class ClientGUI extends JFrame {
-    /** Основные элементы пользовательского интерфейса */
     private final JPanel chatPanel = new JPanel();
     private final JPanel loginPanel = new JPanel();
     private final JTextArea textArea = new JTextArea();
@@ -27,60 +23,38 @@ public class ClientGUI extends JFrame {
             JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     private final JButton sendButton = new JButton("Отправить");
 
-    // Далее идут элементы для приватных сообщений, чтобы
-    // можно было выбрать, кому отправить сообщение
-
-    /** Логин выбранного получателя */
     private String receiver;
 
-    /** Константа, содержащая пункт списка "Всем" */
     private final String all = "всем";
 
-    /** Массив строк, который будет отображаться в раскрывающемся списке */
     private String[] clients = {all};
 
-    /** Сам раскрывающийся список */
     private final JComboBox<String> selectClient = new JComboBox<>(clients);
 
-
-    /** Обработчик нажатия клавиши enter или кнопки submit */
     private final ActionListener listener = event -> {
 
-        // получаем введенный текст
         String message = textInput.getText();
 
-        // если input не пустой то отправляем сообщение
         if (!message.isEmpty()) {
             if (receiver != null && !receiver.equalsIgnoreCase(all)) {
 
-                // если выбран конечный получатель, то добавляем /w и имя получателя к сообщению
                 message = "/w " + receiver + " " + message;
             }
 
-            // Отправляем сообщение с помощью объекта clientNetwork
             this.clientNetwork.sendMessage(message);
 
-            // Сбрасываем элементы управления
             textInput.setText("");
             selectClient.setSelectedItem(all);
             receiver = null;
         }
     };
 
-    /** Объект, находящийся на стороне клиента,
-     * с которым будет взаимодействовать пользовательский интерфейс,
-     * предназначенный для взаимодействия с сервером */
     private final ClientNetwork clientNetwork = new ClientNetwork();
 
-    /** Логин текущего пользователя для формирования имени файла с историей */
     private String login;
 
-    /** Путь к файлу с историей */
     private Path historyPath;
 
-    /**
-     * Конструктор
-     */
     public ClientGUI() {
         // имплементируем callback методы Callback-ov
         setCallBacks();
@@ -99,9 +73,6 @@ public class ClientGUI extends JFrame {
         this.setVisible(true);
     }
 
-    /**
-     * Инициализирует основное окно
-     */
     private void setMainFrame() {
         this.setSize(500, 500);
         this.setTitle("Сетевой чат");
@@ -119,9 +90,6 @@ public class ClientGUI extends JFrame {
         });
     }
 
-    /**
-     * Инициализирует панель для чата
-     */
     private void initializeChatPanel() {
         textArea.setEditable(false);
         clientsInformation.setEditable(false);
@@ -155,9 +123,7 @@ public class ClientGUI extends JFrame {
         textInput.addActionListener(listener);
         sendButton.addActionListener(listener);
 
-        // Обработчик выбора клиента из раскрывающегося списка selectClient
         selectClient.addActionListener(e -> {
-            // клиент, которому необходимо послать сообщение, записывается в поле receiver
             receiver = selectClient.getSelectedItem().toString();
         });
         JLabel toWho = new JLabel("Кому:");
@@ -168,16 +134,13 @@ public class ClientGUI extends JFrame {
         this.add(chatPanel);
     }
 
-    /**
-     * Инициализирует панель авторизации
-     */
     private void initializeLoginJPanel() {
         loginPanel.setBackground(Color.white);
         loginPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         loginPanel.setPreferredSize(new Dimension(300, 150));
         loginPanel.setBorder(BorderFactory.createTitledBorder("Авторизация"));
         JTextField loginTextField = new JTextField();
-        JLabel loginLabel = new JLabel("Ваше имя пользователя: ");    // TODO: Переделать интерфейс
+        JLabel loginLabel = new JLabel("Ваше имя пользователя: ");
         JLabel passwordLabel = new JLabel("Ваш пароль: ");
         JPasswordField passwordTextField = new JPasswordField();
         loginTextField.setPreferredSize(new Dimension(100, 25));
@@ -192,11 +155,9 @@ public class ClientGUI extends JFrame {
         JButton button = new JButton("OK");
         buttonPanel.add(button);
         button.addActionListener(e -> {
-            // При нажатии кнопки "Submit" программа отправляет на сервер сообщение формата /auth login password
             login = loginTextField.getText();
             clientNetwork.sendMessage("/auth " + login + " " + String.valueOf(passwordTextField.getPassword()));
 
-            // Сбрасываем данные логина и пароля
             loginTextField.setText("");
             passwordTextField.setText("");
         });
@@ -205,32 +166,21 @@ public class ClientGUI extends JFrame {
         this.add(loginPanel);
     }
 
-    /**
-     * Имплементирует нужные коллбэки
-     */
     private void setCallBacks() {
-        // при получении сообщения от сервера добавляем его в textArea
-        // и записываем в файл
         this.clientNetwork.setCallOnMsgRecieved(message -> {
             textArea.append(message + "\n");
             writeToFile(message + "\n");
         });
 
-        // при получении нового списка клиентов
         this.clientNetwork.setCallOnChangeClientList(clientsList -> {
 
-            // печатаем всех клиентов в окошке клиентов
             clientsInformation.setText(clientsList);
 
-            // создаем массив присутствующих клиентов + варинт "все"
             clients = (all + " "+ clientsList).split("\\s");
 
-            // устанавливаем этот массив комбобоксу
-            selectClient.setModel(new DefaultComboBoxModel(clients));// передаем данные combobox
+            selectClient.setModel(new DefaultComboBoxModel(clients));
         });
 
-        // при успешной авторизации мы прячем loginPanel и делаем видимой chatPanel,
-        // а также загружаем историю сообщений
         this.clientNetwork.setCallOnAuth(s -> {
             loginPanel.setVisible(false);
             chatPanel.setVisible(true);
@@ -238,7 +188,6 @@ public class ClientGUI extends JFrame {
             initializeHistory();
         });
 
-        // при сообщении об ошибке показываем pop-up
         this.clientNetwork.setCallOnError(message -> JOptionPane.showMessageDialog(null, message, "Ошибка",
                 JOptionPane.ERROR_MESSAGE));
     }
